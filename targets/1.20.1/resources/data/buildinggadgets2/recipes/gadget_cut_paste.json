@@ -1,0 +1,42 @@
+{
+  "type": "botania:runic_altar",
+  "ingredients": [
+    {
+      "item": "botania:rune_mana"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:mana_powder"
+    },
+    {
+      "item": "botania:mana_powder"
+    },
+    {
+      "item": "botania:mana_powder"
+    },
+    {
+      "item": "botania:manasteel_shears"
+    },
+    {
+      "item": "botania:manasteel_shears"
+    },
+    {
+      "item": "botania:livingwood_twig"
+    }
+  ],
+  "mana": 10000,
+  "output": {
+    "item": "buildinggadgets2:gadget_cut_paste"
+  }
+}

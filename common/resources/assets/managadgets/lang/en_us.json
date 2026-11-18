@@ -1,0 +1,5 @@
+{
+  "managadgets.tooltip.mana": "Mana: %s/%s",
+  "managadgets.configuration.mode": "Power source",
+  "managadgets.configuration.manaPerFE": "Mana per FE"
+}

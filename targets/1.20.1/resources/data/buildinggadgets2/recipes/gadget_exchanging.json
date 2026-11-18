@@ -1,0 +1,42 @@
+{
+  "type": "botania:runic_altar",
+  "ingredients": [
+    {
+      "item": "botania:rune_water"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:manasteel_ingot"
+    },
+    {
+      "item": "botania:mana_powder"
+    },
+    {
+      "item": "botania:mana_powder"
+    },
+    {
+      "item": "botania:mana_diamond"
+    },
+    {
+      "item": "botania:mana_diamond"
+    },
+    {
+      "item": "botania:livingwood_twig"
+    },
+    {
+      "item": "botania:livingwood_twig"
+    }
+  ],
+  "mana": 10000,
+  "output": {
+    "item": "buildinggadgets2:gadget_exchanging"
+  }
+}

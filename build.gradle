@@ -1,0 +1,116 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148' apply false
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
+}
+// One build, two targets: gradlew build -PmcTarget=1.20.1 (Forge) or -PmcTarget=1.21.1 (NeoForge).
+ext.mcTarget = providers.gradleProperty('mcTarget').getOrElse('1.21.1')
+if (!(mcTarget in ['1.20.1', '1.21.1'])) throw new GradleException("Unsupported target ${mcTarget}")
+ext.classic = mcTarget == '1.20.1'
+apply plugin: classic ? 'net.neoforged.moddev.legacyforge' : 'net.neoforged.moddev'
+
+version = "${mod_version}+${mcTarget}"
+group = 'dev.oculifelis.managadgets'
+base.archivesName = "managadgets-${classic ? 'forge' : 'neoforge'}"
+layout.buildDirectory = file("build/${mcTarget}")
+java.toolchain.languageVersion = JavaLanguageVersion.of(classic ? 17 : 21)
+
+def lib = { String glob ->
+    def hits = fileTree("libs/${mcTarget}") { include glob }.files
+    if (hits.size() != 1) throw new GradleException("libs/${mcTarget}/${glob}: expected one jar, found ${hits.size()}")
+    // legacyforge only remaps module dependencies, so 1.20.1 reads the jars through the flatDir repo below.
+    return classic ? "local:${hits.iterator().next().name - '.jar'}" : files(hits)
+}
+
+if (classic) repositories { flatDir { dirs "libs/${mcTarget}" } }
+
+sourceSets {
+    main {
+        java.setSrcDirs(['common/java', "targets/${mcTarget}/java"])
+        resources.setSrcDirs(['common/resources', "targets/${mcTarget}/resources"])
+    }
+    // Dev-only GameTests, a second mod loaded only by the gameTestServer run. None of it ships.
+    gametest {
+        java.setSrcDirs(["gametest/${mcTarget}/java"])
+        resources.setSrcDirs(["gametest/${mcTarget}/resources"])
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.withType(Jar).configureEach { preserveFileTimestamps = false; reproducibleFileOrder = true }
+tasks.named('processResources') {
+    def props = [version: mod_version]
+    inputs.properties props
+    filesMatching(['META-INF/mods.toml', 'META-INF/neoforge.mods.toml']) { expand props }
+}
+tasks.named('jar') {
+    from('LICENSE')
+    manifest.attributes('Implementation-Title': 'Mana Gadgets', 'Implementation-Version': project.version.toString())
+}
+
+def environment = extensions.getByName(classic ? 'legacyForge' : 'neoForge')
+environment.with {
+    version = classic ? '1.20.1-47.4.28' : '21.1.262'
+    runs {
+        client {
+            client()
+            gameDirectory = file("runs/${mcTarget}/client")
+            jvmArgument '-Xmx3G'
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = file("runs/${mcTarget}/gametest")
+            systemProperty "${classic ? 'forge' : 'neoforge'}.enabledGameTestNamespaces", 'managadgets_test'
+            jvmArgument '-Xmx3G'
+        }
+        configureEach { logLevel = org.slf4j.event.Level.INFO }
+    }
+    mods {
+        managadgets { sourceSet(sourceSets.main) }
+        managadgets_test { sourceSet(sourceSets.gametest) }
+    }
+}
+if (!classic) {
+    neoForge.addModdingDependenciesTo(sourceSets.gametest)
+    // -PclientTest also loads the test mod in the client, for tools/run_hidden_client.sh.
+    neoForge.runs.client.loadedMods = project.hasProperty('clientTest') ? [neoForge.mods.managadgets, neoForge.mods.managadgets_test] : [neoForge.mods.managadgets]
+    neoForge.runs.gameTestServer.loadedMods = [neoForge.mods.managadgets, neoForge.mods.managadgets_test]
+} else {
+    legacyForge.addModdingDependenciesTo(sourceSets.gametest)
+}
+
+dependencies {
+    if (classic) {
+        // SRG jars, remapped to dev names by legacyforge. On the runtime classpath so the dev runs load them.
+        modCompileOnly lib('buildinggadgets2-*.jar')
+        modCompileOnly lib('Botania-*.jar')
+        modRuntimeOnly lib('buildinggadgets2-*.jar')
+        modRuntimeOnly lib('Botania-*.jar')
+        modRuntimeOnly lib('Patchouli-*.jar')
+        modRuntimeOnly lib('curios-*.jar')
+    } else {
+        compileOnly lib('buildinggadgets2-*.jar')
+        compileOnly lib('botania-*.jar')
+    }
+}
+if (classic) {
+    // The remapped dev jars are what the test code compiles against.
+    configurations.gametestCompileClasspath.extendsFrom configurations.compileClasspath
+    mixin { config 'managadgets.mixins.json' }
+    tasks.named('jar') { manifest.attributes(['MixinConfigs': 'managadgets.mixins.json']) }
+} else {
+    configurations.gametestCompileOnly.extendsFrom configurations.compileOnly
+    // NeoForge dev runs load the real mod jars from each run's mods folder.
+    tasks.register('stageRunMods', Copy) {
+        from fileTree("libs/${mcTarget}") { include '*.jar' }
+        into file("runs/${mcTarget}/gametest/mods")
+    }
+    tasks.register('stageClientMods', Copy) {
+        from fileTree("libs/${mcTarget}") { include '*.jar' }
+        into file("runs/${mcTarget}/client/mods")
+    }
+    tasks.matching { it.name == 'runGameTestServer' }.configureEach { dependsOn 'stageRunMods' }
+    tasks.matching { it.name == 'runClient' }.configureEach { dependsOn 'stageClientMods' }
+}

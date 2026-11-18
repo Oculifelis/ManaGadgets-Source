@@ -1,0 +1,15 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+modId = "managadgets_test"
+version = "0"
+displayName = "Mana Gadgets GameTests (dev only)"
+
+[[dependencies.managadgets_test]]
+modId = "managadgets"
+type = "required"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"

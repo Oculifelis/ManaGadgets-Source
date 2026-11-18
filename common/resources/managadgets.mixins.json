@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.oculifelis.managadgets.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "BaseGadgetBarMixin",
+    "BuildingUtilsMixin",
+    "EnergyChargeMixin",
+    "GadgetCutPasteMixin",
+    "GadgetExchangerMixin"
+  ],
+  "client": [
+    "PreviewRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
