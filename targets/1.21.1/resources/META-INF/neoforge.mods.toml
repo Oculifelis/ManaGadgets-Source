@@ -6,7 +6,7 @@ issueTrackerURL="https://github.com/Oculifelis/ManaGadgets/issues"
 [[mods]]
 modId="managadgets"
 version="${version}"
-displayName="Mana Gadgets"
+displayName="ManaGadgets"
 authors="Oculifelis"
 description='''Building Gadgets run on Botania mana from the mana tablets, rings and other mana items you carry.'''
 
